@@ -1,0 +1,127 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+
+  # =====================
+  # BASE DE DATOS MARIADB
+  # =====================
+  mariadb:
+    image: mariadb:10.11
+    container_name: movies_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password123
+      MYSQL_DATABASE: movies_db
+      MYSQL_USER: movies_user
+      MYSQL_PASSWORD: movies_password123
+    ports:
+      - "3306:3306"          # Acceso externo a la BD (opcional, para administración)
+    volumes:
+      - db_data:/var/lib/mysql          # Datos persistentes
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql  # Script inicial
+    networks:
+      - movies_network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================
+  # INSTANCIA 1 DE LA API
+  # ========================
+  api1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: movies_api1
+    restart: always
+    env_file:
+      - .env
+    environment:
+      INSTANCE_ID: "API-1" #ID DE IDENTIFICACION  
+      PORT: 3000
+    ports:
+      - "3000:3000"          # Acceso directo (para pruebas)
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - movies_network
+
+  # ========================
+  # INSTANCIA 2 DE LA API
+  # ========================
+  api2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: movies_api2
+    restart: always
+    env_file:
+      - .env
+    environment:
+      INSTANCE_ID: "API-2" #ID DE IDENTIFICACION   
+      PORT: 3000
+    ports:
+      - "3001:3000"          # Puerto externo diferente
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - movies_network
+
+  # ========================
+  # INSTANCIA 3 DE LA API
+  # ========================
+  api3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: movies_api3
+    restart: always
+    env_file:
+      - .env
+    environment:
+      INSTANCE_ID: "API-3" #ID DE IDENTIFICACION  
+      PORT: 3000
+    ports:
+      - "3002:3000"          # Puerto externo diferente
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - movies_network
+
+  # ========================
+  # NGINX (LOAD BALANCER)
+  # ========================
+  nginx:
+    image: nginx:alpine
+    container_name: movies_nginx
+    restart: always
+    ports:
+      - "80:80"              # Puerto público principal
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api1
+      - api2
+      - api3
+    networks:
+      - movies_network
+
+# ========================
+# REDES
+# ========================
+networks:
+  movies_network:
+    driver: bridge
+
+# ========================
+# VOLÚMENES
+# ========================
+volumes:
+  db_data:
+    driver: local
