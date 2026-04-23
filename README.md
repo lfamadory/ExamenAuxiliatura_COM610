@@ -9,7 +9,7 @@ Este proyecto despliega una arquitectura escalable para una API de películas, u
 ##  Cómo Ejecutar el Proyecto
 
 1. **Clonar o descargar** este repositorio en tu máquina local.
-2. Abrir una terminal en la carpeta raíz del proyecto (`movies-infra`).
+2. Abrir una terminal en la carpeta raíz del proyecto (`ExamenAuxiliatura_COM610`).
 3. Ejecutar el siguiente comando para construir e iniciar todos los servicios:
    ```bash
    docker-compose up --build
@@ -54,3 +54,22 @@ Para confirmar que el tráfico se reparte mediante **Round-Robin**, ejecuta este
 - `/nginx`: Configuración del proxy inverso (`nginx.conf`).
 - `docker-compose.yml`: Definición de la infraestructura.
 - `Dockerfile`: Configuración de la imagen de la API.
+
+```
+Cliente (navegador / curl)
+         │
+         ▼ Puerto 80
+    ┌─────────┐
+    │  NGINX  │  ← Balanceador de carga (Round-Robin)
+    └────┬────┘
+    ┌────┴─────────────┐
+    ▼         ▼        ▼
+┌───────┐ ┌───────┐ ┌───────┐
+│ API-1 │ │ API-2 │ │ API-3 │  ← Node.js en puerto 3000
+└───┬───┘ └───┬───┘ └───┬───┘
+    └─────────┼──────────┘
+              ▼ Puerto 3306
+         ┌─────────┐
+         │ MariaDB │  ← Volumen persistente
+         └─────────┘
+```
