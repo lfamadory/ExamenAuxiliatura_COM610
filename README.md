@@ -44,7 +44,7 @@ Puedes probar las rutas principales a través del balanceador (Puerto 80):
 Para confirmar que el tráfico se reparte mediante **Round-Robin**, ejecuta este comando en PowerShell:
 ```powershell
 1..6 | ForEach-Object { 
-    (Invoke-WebRequest -Uri "http://localhost/api/health" -UseBasicParsing).Content 
+    (Invoke-WebRequest -Uri "http://localhost/health" -UseBasicParsing).Content 
 }
 ```
 *Deberías ver cómo responden de forma alternada la API-1, API-2 y API-3.*
